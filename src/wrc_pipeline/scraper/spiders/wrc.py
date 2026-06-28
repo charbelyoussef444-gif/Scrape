@@ -28,6 +28,7 @@ from datetime import date, datetime
 from urllib.parse import urlencode
 
 import scrapy
+from scrapy.exceptions import IgnoreRequest
 from scrapy.http import Response
 from scrapy.spidermiddlewares.httperror import HttpError
 
@@ -236,6 +237,10 @@ class WrcSpider(scrapy.Spider):
     # -- error handling -------------------------------------------------------
 
     def handle_document_error(self, failure):
+        # An intentional skip (recheck disabled) raises IgnoreRequest, which also
+        # triggers this errback — don't double-count it as a failure.
+        if failure.check(IgnoreRequest):
+            return
         record = failure.request.meta.get("wrc_record", {})
         key = RunAccounting.key(record.get("body_key", "?"), record.get("partition_date", "?"))
         status = failure.value.response.status if failure.check(HttpError) else None

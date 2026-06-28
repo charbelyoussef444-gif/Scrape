@@ -31,7 +31,8 @@ from wrc_pipeline.storage.object_store import content_type_for
 
 
 class PersistencePipeline:
-    def __init__(self) -> None:
+    def __init__(self, crawler) -> None:
+        self.crawler = crawler
         settings = get_settings()
         self._repo = landing_repo(settings)
         self._store = landing_store(settings)
@@ -40,19 +41,20 @@ class PersistencePipeline:
 
     @classmethod
     def from_crawler(cls, crawler):
-        return cls()
+        return cls(crawler)
 
-    def open_spider(self, spider):
+    def open_spider(self):
         # Ensure infrastructure is ready before the first write.
         self._repo.ensure_indexes()
         self._store.ensure_bucket()
-        self._run_id = getattr(spider, "run_id", "unknown")
+        self._run_id = getattr(self.crawler.spider, "run_id", "unknown")
         self.log = self.log.bind(run_id=self._run_id)
 
-    def close_spider(self, spider):
+    def close_spider(self):
         self._repo.close()
 
-    def process_item(self, item, spider):
+    def process_item(self, item):
+        accounting = self.crawler.spider.accounting
         record = dict(item)
         # Canonicalise before hashing/storing so per-request volatile markup
         # (e.g. the server's render-time comment) doesn't defeat idempotency.
@@ -63,11 +65,11 @@ class PersistencePipeline:
         try:
             outcome = self._persist(record, data, identifier)
         except Exception as exc:  # noqa: BLE001 - we want to account for any failure
-            spider.accounting.add_failure(key, record["document_url"], f"persist: {exc}")
+            accounting.add_failure(key, record["document_url"], f"persist: {exc}")
             self.log.error("persist_failed", identifier=identifier, error=str(exc))
             raise DropItem(f"persist failed for {identifier}: {exc}") from exc
 
-        spider.accounting.mark(key, outcome)
+        accounting.mark(key, outcome)
         return item
 
     # -- core logic -----------------------------------------------------------

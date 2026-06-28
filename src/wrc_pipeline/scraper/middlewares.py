@@ -22,7 +22,8 @@ from wrc_pipeline.scraper.accounting import RunAccounting
 
 
 class SkipKnownDocumentsMiddleware:
-    def __init__(self) -> None:
+    def __init__(self, crawler) -> None:
+        self.crawler = crawler
         settings = get_settings()
         self.recheck_existing = settings.recheck_existing
         self._repo = landing_repo(settings) if not self.recheck_existing else None
@@ -30,11 +31,11 @@ class SkipKnownDocumentsMiddleware:
 
     @classmethod
     def from_crawler(cls, crawler):
-        mw = cls()
+        mw = cls(crawler)
         crawler.signals.connect(mw.spider_closed, signal=signals.spider_closed)
         return mw
 
-    def process_request(self, request, spider):
+    def process_request(self, request):
         if self.recheck_existing or not request.meta.get("wrc_document"):
             return None  # fetch normally
 
@@ -42,11 +43,11 @@ class SkipKnownDocumentsMiddleware:
         identifier = record["identifier"]
         if self._repo and self._repo.exists(identifier):
             key = RunAccounting.key(record["body_key"], record["partition_date"])
-            spider.accounting.mark(key, "skipped")
+            self.crawler.spider.accounting.mark(key, "skipped")
             self.log.info("document_skipped", identifier=identifier, reason="already_ingested")
             raise IgnoreRequest(f"{identifier} already ingested")
         return None
 
-    def spider_closed(self, spider):
+    def spider_closed(self):
         if self._repo:
             self._repo.close()
