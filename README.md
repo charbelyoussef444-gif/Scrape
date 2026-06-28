@@ -52,6 +52,23 @@ pip install -e ".[dev,orchestration]"
 MinIO console: http://localhost:9001 (user/pass from `.env`, default
 `minioadmin`/`minioadmin`). MongoDB: `mongodb://localhost:27017`.
 
+### Windows (PowerShell)
+
+The blocks above are bash; the PowerShell equivalents for setup are:
+
+```powershell
+Copy-Item .env.example .env
+docker compose up -d mongo minio createbuckets
+python -m venv .venv; .\.venv\Scripts\Activate.ps1
+pip install -e ".[dev,orchestration]"
+```
+
+Once the venv is activated, the `wrc-scrape` / `wrc-transform` / `pytest` /
+`dagster` commands below work identically. PowerShell-specific notes:
+- Set an env var with `$env:NAME = "value"` (e.g. `$env:WRC_RECHECK_EXISTING = "false"`).
+- Launch the Dagster UI with:
+  `$env:DAGSTER_HOME = (Get-Location).Path; dagster dev -m wrc_pipeline.orchestration.definitions`
+
 ## Run — command line
 
 ```bash
