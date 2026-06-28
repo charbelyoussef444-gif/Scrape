@@ -77,10 +77,8 @@ def _process_record(record, src_store, dst_repo, dst_store, stats) -> None:
             from wrc_pipeline.transform.html_cleaner import clean_html
 
             output = clean_html(raw, title=identifier)
-            stats["transformed_html"] += 1
         else:
             output = raw  # PDF/DOC stored verbatim
-            stats["copied_asis"] += 1
 
         new_hash = sha256_hex(output)
         ext = document_extension(record["document_url"], document_type)
@@ -88,12 +86,15 @@ def _process_record(record, src_store, dst_repo, dst_store, stats) -> None:
 
         existing = dst_repo.get(identifier)
         if existing and existing.get("file_hash") == new_hash:
+            # Already transformed with identical result -> idempotent no-op.
             stats["unchanged"] += 1
             stats["processed"] += 1
             return
 
         dst_store.put_bytes(new_key, output, content_type_for(document_type))
         dst_repo.upsert(_curated_record(record, new_key, new_hash, len(output)))
+        # Count outcomes mutually exclusively: transformed/copied are *writes*.
+        stats["transformed_html" if document_type == "html" else "copied_asis"] += 1
         stats["processed"] += 1
         log.info(
             "record_transformed",

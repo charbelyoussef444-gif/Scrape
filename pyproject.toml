@@ -12,7 +12,9 @@ license = { text = "MIT" }
 
 dependencies = [
     # --- Scraping ---
-    "Scrapy>=2.12",
+    # >=2.13 for the async `start()` entry point and the crawler-based component
+    # API (process_request/process_item without the deprecated spider argument).
+    "Scrapy>=2.13",
     # --- Storage clients ---
     "pymongo>=4.7",          # NoSQL metadata store (MongoDB)
     "boto3>=1.34",           # S3-compatible object storage (MinIO)
