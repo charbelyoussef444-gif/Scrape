@@ -10,11 +10,12 @@ worker), then passes the date window to ``transform``, which runs in-process.
 The data dependency makes Dagster schedule transform strictly after ingest.
 """
 
-from __future__ import annotations
-
 import subprocess
 import sys
 from datetime import date, datetime
+
+# NB: do *not* add `from __future__ import annotations` here — Dagster resolves
+# op config/IO types from real (non-stringized) annotations at import time.
 
 from dagster import Config, Definitions, OpExecutionContext, job, op
 
