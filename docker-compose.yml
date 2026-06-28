@@ -1,0 +1,78 @@
+# Infrastructure for the WRC pipeline.
+#
+# Required by the assignment to run in containers:
+#   * mongo  - NoSQL metadata store
+#   * minio  - S3-compatible object storage
+# Plus convenience services:
+#   * createbuckets - one-shot job that creates the landing/curated buckets
+#   * dagster       - orchestrator UI (optional; profile "orchestration")
+#
+# Start storage only:        docker compose up -d mongo minio createbuckets
+# Start everything:          docker compose --profile orchestration up -d
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${WRC_S3_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${WRC_S3_SECRET_KEY:-minioadmin}
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # web console
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # One-shot: wait for MinIO, then create the two buckets.
+  createbuckets:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ${WRC_S3_ACCESS_KEY:-minioadmin} ${WRC_S3_SECRET_KEY:-minioadmin};
+      mc mb --ignore-existing local/${WRC_LANDING_BUCKET:-landing};
+      mc mb --ignore-existing local/${WRC_CURATED_BUCKET:-curated};
+      echo 'buckets ready';
+      "
+
+  # Optional orchestrator UI. Enable with: --profile orchestration
+  dagster:
+    profiles: ["orchestration"]
+    build: .
+    command: dagster dev -m wrc_pipeline.orchestration.definitions -h 0.0.0.0 -p 3000
+    ports:
+      - "3000:3000"
+    environment:
+      WRC_MONGO_URI: mongodb://mongo:27017
+      WRC_S3_ENDPOINT_URL: http://minio:9000
+      WRC_S3_ACCESS_KEY: ${WRC_S3_ACCESS_KEY:-minioadmin}
+      WRC_S3_SECRET_KEY: ${WRC_S3_SECRET_KEY:-minioadmin}
+      DAGSTER_HOME: /opt/dagster/home
+    depends_on:
+      - mongo
+      - minio
+
+volumes:
+  mongo_data:
+  minio_data:

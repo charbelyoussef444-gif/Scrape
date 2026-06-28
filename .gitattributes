@@ -1,0 +1,8 @@
+# Normalise line endings to LF in the repository so shell scripts, the
+# Makefile, Dockerfile and YAML behave correctly inside Linux containers
+# regardless of the contributor's OS.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.pdf binary

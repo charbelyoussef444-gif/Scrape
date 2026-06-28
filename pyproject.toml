@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wrc-pipeline"
+version = "0.1.0"
+description = "Scrapy-based ingestion + transformation pipeline for Workplace Relations Commission legal decisions"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+license = { text = "MIT" }
+
+dependencies = [
+    # --- Scraping ---
+    "Scrapy>=2.12",
+    # --- Storage clients ---
+    "pymongo>=4.7",          # NoSQL metadata store (MongoDB)
+    "boto3>=1.34",           # S3-compatible object storage (MinIO)
+    # --- Transformation ---
+    "beautifulsoup4>=4.12",
+    "lxml>=5.2",
+    # --- Cross-cutting ---
+    "pydantic-settings>=2.3", # typed configuration from env / .env
+    "structlog>=24.1",        # structured JSON logging
+    "python-dateutil>=2.9",   # robust month/date arithmetic for partitioning
+]
+
+[project.optional-dependencies]
+# Orchestration is optional so the core pipeline stays importable without it.
+orchestration = [
+    "dagster>=1.7",
+    "dagster-webserver>=1.7",
+]
+dev = [
+    "pytest>=8.2",
+    "ruff>=0.5",
+    "mongomock>=4.1",   # in-memory MongoDB for idempotency tests
+]
+
+[project.scripts]
+# Command-line entrypoints (the assignment accepts CLI runs).
+wrc-scrape = "wrc_pipeline.cli:scrape_main"
+wrc-transform = "wrc_pipeline.cli:transform_main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# ---------------------------------------------------------------------------
+# Tooling
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# A pragmatic, readable rule set: pycodestyle, pyflakes, isort, bugbear,
+# comprehensions, pyupgrade, simplify.
+select = ["E", "F", "I", "B", "C4", "UP", "SIM"]
+ignore = ["E501"]  # line length handled by formatter
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"

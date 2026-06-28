@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Environment / secrets
+.env
+
+# Scrapy
+.scrapy/
+httpcache/
+
+# Dagster local instance
+.dagster_home/
+tmp_dagster*/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local data dumps (never commit scraped corpus)
+data/
+*.log
