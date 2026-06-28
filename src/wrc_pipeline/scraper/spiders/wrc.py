@@ -126,7 +126,17 @@ class WrcSpider(scrapy.Spider):
         key = RunAccounting.key(m["body_key"], m["partition_label"])
 
         if m["page"] == 1:
+            rows_on_page = len(response.css("li.each-item"))
             total = self._extract_total(response)
+            if total is None:
+                # Result count couldn't be parsed (e.g. site layout change). Fall
+                # back to the rows on this page and skip fan-out rather than crash.
+                self.log.warning(
+                    "result_count_unparsed",
+                    body=m["body_key"], partition=m["partition_label"],
+                    rows_on_page=rows_on_page,
+                )
+                total = rows_on_page
             self.accounting.add_found(key, total)
             self.log.info(
                 "partition_listing",
@@ -149,6 +159,10 @@ class WrcSpider(scrapy.Spider):
         m = response.meta
         href = row.css("h2.title a::attr(href)").get() or row.css("a.btn::attr(href)").get()
         if not href:
+            # A found record we cannot follow — record it with a reason so the
+            # run reconciles (found == scraped + failed, every miss explained).
+            key = RunAccounting.key(m["body_key"], m["partition_label"])
+            self.accounting.add_failure(key, response.url, "unparsable listing row (no document link)")
             self.log.warning("row_unparsable", body=m["body_key"], partition=m["partition_label"])
             return
 
@@ -275,9 +289,10 @@ class WrcSpider(scrapy.Spider):
         self.log.info("run_summary", reason=reason, **summary)
 
     @staticmethod
-    def _extract_total(response: Response) -> int:
+    def _extract_total(response: Response) -> int | None:
+        """Parse the "of N results" count; None if it can't be found."""
         match = _COUNT_RE.search(response.text)
-        return int(match.group(1).replace(",", "")) if match else 0
+        return int(match.group(1).replace(",", "")) if match else None
 
 
 class _PartitionView:

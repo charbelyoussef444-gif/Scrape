@@ -62,6 +62,13 @@ class PersistencePipeline:
         identifier = record["identifier"]
         key = RunAccounting.key(record["body_key"], record["partition_date"])
 
+        # A 200 with an empty body is a failed download, not a valid document —
+        # record it with a reason instead of storing a 0-byte file.
+        if not data:
+            accounting.add_failure(key, record["document_url"], "empty document body")
+            self.log.error("empty_document", identifier=identifier, url=record["document_url"])
+            raise DropItem(f"empty document for {identifier}")
+
         try:
             outcome = self._persist(record, data, identifier)
         except Exception as exc:  # noqa: BLE001 - we want to account for any failure

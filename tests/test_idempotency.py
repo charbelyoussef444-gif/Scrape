@@ -7,8 +7,11 @@ so no MongoDB or MinIO is required.
 from datetime import date
 
 import pytest
+from scrapy.exceptions import DropItem
 
 from wrc_pipeline.logging_config import get_logger
+from wrc_pipeline.scraper.accounting import RunAccounting
+from wrc_pipeline.scraper.items import DecisionItem
 from wrc_pipeline.scraper.pipelines import PersistencePipeline
 
 
@@ -113,3 +116,31 @@ def test_extension_drives_storage_key(doc_type, url, expected_ext):
     record["document_url"] = url
     pipe._persist(record, b"data", "ADJ-1")
     assert pipe._repo.docs["ADJ-1"]["storage_path"].endswith(expected_ext)
+
+
+class _FakeSpider:
+    def __init__(self):
+        self.accounting = RunAccounting()
+
+
+class _FakeCrawler:
+    def __init__(self, spider):
+        self.spider = spider
+
+
+def test_empty_document_body_is_recorded_as_failure():
+    spider = _FakeSpider()
+    pipe = PersistencePipeline.__new__(PersistencePipeline)
+    pipe.crawler = _FakeCrawler(spider)
+    pipe.log = get_logger("test")
+
+    item = DecisionItem(**make_record())
+    item["document_bytes"] = b""  # empty download
+
+    with pytest.raises(DropItem):
+        pipe.process_item(item)
+
+    summary = spider.accounting.summary()
+    assert summary["totals"]["failed"] == 1
+    reason = summary["partitions"]["workplace_relations_commission/2024-01"]["failures"][0]["reason"]
+    assert "empty" in reason

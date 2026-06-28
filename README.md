@@ -20,8 +20,11 @@ retries/rate-limiting, deduplication, scaling to 50+ sources).
   Tribunal) render an HTML stub linking to the real PDF; the spider follows that
   one hop and stores the actual PDF.
 - Stores each file's path and **SHA-256 hash** in its metadata record.
-- Is **idempotent**: reruns create no duplicate records and don't rewrite
-  unchanged files; content changes are detected via the hash.
+- Is **idempotent**: reruns never create duplicate records. By default it
+  re-fetches and uses the file hash to *detect content changes* (unchanged files
+  are not rewritten; changed files are stored under a versioned key). Set
+  `WRC_RECHECK_EXISTING=false` to skip already-ingested documents entirely
+  (zero re-downloads) — see ARCHITECTURE.md for the trade-off.
 - Emits **structured JSON logs** (per-partition progress, found vs scraped,
   failures with URL + reason, and an end-of-run summary).
 - A **transformation** step cleans HTML to the relevant decision content
@@ -111,9 +114,9 @@ partition size, bodies, politeness/retry knobs, idempotency mode).
 ## Development
 
 ```bash
-pytest            # unit tests (no services required — uses fakes + mongomock)
-ruff check src    # lint
-ruff format src   # format
+pytest                  # unit tests (no services required — uses fakes + mongomock)
+ruff check src tests    # lint
+ruff format src tests   # format
 ```
 
 ## Project layout
