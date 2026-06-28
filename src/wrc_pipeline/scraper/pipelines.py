@@ -20,7 +20,12 @@ from wrc_pipeline.config import get_settings
 from wrc_pipeline.factories import landing_repo, landing_store
 from wrc_pipeline.hashing import sha256_hex, short_hash
 from wrc_pipeline.logging_config import get_logger
-from wrc_pipeline.models import build_record, document_extension, landing_key
+from wrc_pipeline.models import (
+    build_record,
+    canonicalize_for_storage,
+    document_extension,
+    landing_key,
+)
 from wrc_pipeline.scraper.accounting import RunAccounting
 from wrc_pipeline.storage.object_store import content_type_for
 
@@ -49,7 +54,9 @@ class PersistencePipeline:
 
     def process_item(self, item, spider):
         record = dict(item)
-        data: bytes = record.pop("document_bytes")
+        # Canonicalise before hashing/storing so per-request volatile markup
+        # (e.g. the server's render-time comment) doesn't defeat idempotency.
+        data: bytes = canonicalize_for_storage(record["document_type"], record.pop("document_bytes"))
         identifier = record["identifier"]
         key = RunAccounting.key(record["body_key"], record["partition_date"])
 

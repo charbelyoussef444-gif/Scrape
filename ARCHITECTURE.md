@@ -59,6 +59,13 @@ Two independent levels:
    versions survive (append-only landing zone) and the metadata pointer + hash
    are updated.
 
+The WRC HTML pages embed a per-request render-time comment
+(`<!-- Elapsed time: ... -->`) that changes on every fetch. We strip that single
+volatile marker before hashing/storing, otherwise every rerun would look
+"changed". This keeps the hash a faithful signal of *real* content change while
+preserving genuine idempotency (verified live: a second run reports all records
+`unchanged` with zero new objects).
+
 The source sends no `ETag`/`Last-Modified` and `Cache-Control: no-cache`, so HTTP
 conditional requests can't short-circuit the fetch — hashing is the source of
 truth for change detection, exactly as the brief specifies. For a pure

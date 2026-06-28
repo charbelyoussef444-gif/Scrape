@@ -2,14 +2,34 @@
 
 from datetime import date
 
+from wrc_pipeline.hashing import sha256_hex
 from wrc_pipeline.models import (
     build_record,
+    canonicalize_for_storage,
     curated_key,
     detect_document_type,
     document_extension,
     landing_key,
     normalize_identifier,
 )
+
+
+def test_canonicalize_strips_volatile_render_time():
+    a = b"<html><body>Decision text</body></html><!-- Elapsed time: 0.0156026 -->"
+    b = b"<html><body>Decision text</body></html><!-- Elapsed time: 0.0312594 -->"
+    # Same document fetched twice -> identical canonical bytes & hash (idempotent).
+    assert canonicalize_for_storage("html", a) == canonicalize_for_storage("html", b)
+    assert sha256_hex(canonicalize_for_storage("html", a)) == sha256_hex(
+        canonicalize_for_storage("html", b)
+    )
+    # A genuine content change is still detected.
+    c = b"<html><body>DIFFERENT text</body></html><!-- Elapsed time: 0.01 -->"
+    assert canonicalize_for_storage("html", a) != canonicalize_for_storage("html", c)
+
+
+def test_canonicalize_leaves_binary_untouched():
+    pdf = b"%PDF-1.7\x00\x01 binary <!-- Elapsed time: 1 -->"
+    assert canonicalize_for_storage("pdf", pdf) == pdf
 
 
 def test_normalize_identifier():

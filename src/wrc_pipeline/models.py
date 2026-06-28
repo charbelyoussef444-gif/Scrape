@@ -20,6 +20,21 @@ _WS_AROUND_HYPHEN = re.compile(r"\s*-\s*")
 _WHITESPACE = re.compile(r"\s+")
 
 
+# WRC HTML pages embed a per-request render-time comment, e.g.
+# "<!-- Elapsed time: 0.0156026 -->", which changes on every fetch. Left in, it
+# would make the file hash differ on each run and break landing-zone idempotency.
+# We strip it so the stored bytes (and their hash) are stable, while genuine
+# content changes are still detected.
+_VOLATILE_HTML = re.compile(rb"<!--\s*Elapsed time:.*?-->", re.IGNORECASE | re.DOTALL)
+
+
+def canonicalize_for_storage(document_type: str, data: bytes) -> bytes:
+    """Remove per-request volatile markers so identical documents hash equally."""
+    if document_type == "html":
+        return _VOLATILE_HTML.sub(b"", data)
+    return data
+
+
 def normalize_identifier(raw: str) -> str:
     """Canonicalise a decision reference.
 

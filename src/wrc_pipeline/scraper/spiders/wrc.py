@@ -74,6 +74,12 @@ class WrcSpider(scrapy.Spider):
 
     # -- request generation ---------------------------------------------------
 
+    async def start(self):
+        """Scrapy 2.13+ entry point (async). Delegates to ``start_requests`` so
+        the spider works on both new and older Scrapy versions."""
+        for request in self.start_requests():
+            yield request
+
     def start_requests(self):
         partitions = iter_partitions(self.start_date, self.end_date, self.partition_size)
         bodies = resolve_bodies(self.body_keys)
