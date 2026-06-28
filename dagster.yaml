@@ -1,0 +1,5 @@
+# Dagster instance configuration (used when DAGSTER_HOME points here).
+# Run/event/schedule storage default to SQLite under DAGSTER_HOME, which is fine
+# for local dev and this assessment. Telemetry is disabled for an offline setup.
+telemetry:
+  enabled: false

@@ -13,7 +13,9 @@ COPY pyproject.toml README.md ./
 COPY src ./src
 RUN pip install --upgrade pip && pip install ".[orchestration]"
 
+# Dagster instance config (explicit, so `dagster dev` doesn't warn / default).
 RUN mkdir -p /opt/dagster/home
+COPY dagster.yaml /opt/dagster/home/dagster.yaml
 
 # Default to showing CLI help; compose overrides the command for Dagster.
 CMD ["wrc-scrape", "--help"]
