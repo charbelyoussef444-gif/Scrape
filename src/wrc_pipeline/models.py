@@ -49,6 +49,19 @@ def normalize_identifier(raw: str) -> str:
     return collapsed.upper()
 
 
+def identifier_from_url(url: str) -> str:
+    """Derive the canonical identifier from a decision's detail-page URL slug.
+
+    The slug is the authoritative unique key: the listing's "Ref no" is *not*
+    unique (one ref can map to several documents), whereas each decision has a
+    distinct detail URL, e.g. ``/en/cases/2011/december/ud1301_2010.html`` ->
+    ``UD1301_2010``. For recent WRC/Labour Court decisions this equals the
+    displayed reference (``adj-00047352`` -> ``ADJ-00047352``).
+    """
+    slug = os.path.splitext(os.path.basename(urlparse(url).path))[0]
+    return normalize_identifier(slug.strip("_-. "))
+
+
 # Document classification -----------------------------------------------------
 
 PDF_EXTS = {".pdf"}

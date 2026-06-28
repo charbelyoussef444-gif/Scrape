@@ -16,7 +16,9 @@ retries/rate-limiting, deduplication, scaling to 50+ sources).
 - Extracts metadata (identifier, title, description, decision date, document
   link, partition) into **MongoDB**.
 - Downloads documents into **MinIO** object storage: PDFs/DOCs stored as-is,
-  HTML decision pages saved as `.html`.
+  HTML decision pages saved as `.html`. Legacy decisions (EAT / Equality
+  Tribunal) render an HTML stub linking to the real PDF; the spider follows that
+  one hop and stores the actual PDF.
 - Stores each file's path and **SHA-256 hash** in its metadata record.
 - Is **idempotent**: reruns create no duplicate records and don't rewrite
   unchanged files; content changes are detected via the hash.
@@ -53,8 +55,8 @@ MinIO console: http://localhost:9001 (user/pass from `.env`, default
 # Ingest: scrape all bodies, Jan–Mar 2024 (end date is exclusive), monthly.
 wrc-scrape --start 2024-01-01 --end 2024-04-01 --partition monthly
 
-# ...or a single body:
-wrc-scrape --start 2024-01-01 --end 2024-02-01 --bodies labour_court
+# ...or a single body (and cap the number of docs, handy for a quick sample):
+wrc-scrape --start 2024-01-01 --end 2024-02-01 --bodies labour_court --limit 20
 
 # Transform the same window into the curated zone.
 wrc-transform --start 2024-01-01 --end 2024-04-01

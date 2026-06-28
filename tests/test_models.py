@@ -9,9 +9,23 @@ from wrc_pipeline.models import (
     curated_key,
     detect_document_type,
     document_extension,
+    identifier_from_url,
     landing_key,
     normalize_identifier,
 )
+
+
+def test_identifier_from_url_is_unique_slug():
+    base = "https://www.workplacerelations.ie/en/cases/2024/january/"
+    assert identifier_from_url(base + "adj-00047352.html") == "ADJ-00047352"
+    assert identifier_from_url(base + "lcr22904.html") == "LCR22904"
+    # Two legacy decisions that share a (non-unique) "Ref no" still get distinct
+    # identifiers because their URL slugs differ.
+    a = identifier_from_url(base + "rp2093_2010.html")
+    b = identifier_from_url(base + "ud1189_10_rp1619_10_wt493_10_.html")
+    assert a == "RP2093_2010"
+    assert b == "UD1189_10_RP1619_10_WT493_10"
+    assert a != b
 
 
 def test_canonicalize_strips_volatile_render_time():

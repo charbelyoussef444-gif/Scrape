@@ -33,7 +33,7 @@ from scrapy.spidermiddlewares.httperror import HttpError
 
 from wrc_pipeline.config import get_settings
 from wrc_pipeline.logging_config import get_logger
-from wrc_pipeline.models import detect_document_type, normalize_identifier
+from wrc_pipeline.models import detect_document_type, identifier_from_url
 from wrc_pipeline.partitioning import iter_partitions
 from wrc_pipeline.scraper.accounting import RunAccounting
 from wrc_pipeline.scraper.items import DecisionItem
@@ -146,17 +146,18 @@ class WrcSpider(scrapy.Spider):
 
     def _row_to_request(self, row, response: Response):
         m = response.meta
-        identifier = (row.css("span.refNO::text").get() or row.css("h2.title a::attr(title)").get())
         href = row.css("h2.title a::attr(href)").get() or row.css("a.btn::attr(href)").get()
-        if not identifier or not href:
+        if not href:
             self.log.warning("row_unparsable", body=m["body_key"], partition=m["partition_label"])
             return
 
-        identifier = normalize_identifier(identifier)
         document_url = response.urljoin(href)
+        # The URL slug is the unique key; the listing "Ref no" is not unique.
+        identifier = identifier_from_url(document_url)
+        ref_no = (row.css("span.refNO::text").get() or "").strip()
         record = {
             "identifier": identifier,
-            "title": (row.css("h2.title a::text").get() or identifier).strip(),
+            "title": (row.css("h2.title a::text").get() or ref_no or identifier).strip(),
             "description": (
                 row.css("p.description::attr(title)").get()
                 or row.css("p.description::text").get()
@@ -182,9 +183,55 @@ class WrcSpider(scrapy.Spider):
 
     def parse_document(self, response: Response):
         record = response.meta["wrc_record"]
+
+        # Legacy decisions (EAT / Equality Tribunal) link to an HTML *stub* whose
+        # only content is a "Download" button pointing at the real decision PDF.
+        # Detect that one-hop case and follow it so we store the actual document
+        # (the assignment's "download PDF/DOC as-is" branch) instead of an empty
+        # stub. Real HTML decisions have no such download anchor and fall through.
+        if record["document_type"] == "html":
+            href = self._decision_download_link(response)
+            if href:
+                doc_url = response.urljoin(href)
+                followed = {
+                    **record,
+                    "document_url": doc_url,
+                    "document_type": detect_document_type(doc_url),
+                    "source_url": response.url,
+                }
+                yield scrapy.Request(
+                    doc_url,
+                    callback=self.parse_document,
+                    errback=self.handle_document_error,
+                    meta={"wrc_record": followed, "wrc_document": True},
+                )
+                return
+
         item = DecisionItem(**record)
         item["document_bytes"] = response.body
         yield item
+
+    # Minimum characters of real text in div.content for a page to count as a
+    # genuine HTML decision (above this we keep the HTML; below it the page is a
+    # stub whose real document is a linked PDF/DOC).
+    _MIN_CONTENT_CHARS = 200
+
+    @classmethod
+    def _decision_download_link(cls, response: Response) -> str | None:
+        """Return a downloadable decision-file link if the page is a stub.
+
+        Legacy decisions render an (almost) empty ``div.content`` and place the
+        real file behind an ``a.download`` link in a sibling "related file" block.
+        We only follow that link when the page has no substantive HTML content, so
+        full HTML decisions (which may also offer a PDF) are kept as HTML.
+        """
+        content_text = " ".join(response.css("div.content ::text").getall()).strip()
+        if len(content_text) >= cls._MIN_CONTENT_CHARS:
+            return None
+        for href in response.css("a.download::attr(href)").getall():
+            if href.lower().split("?")[0].endswith((".pdf", ".doc", ".docx", ".rtf")):
+                return href
+        return None
 
     # -- error handling -------------------------------------------------------
 

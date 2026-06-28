@@ -37,6 +37,8 @@ def scrape_main(argv: list[str] | None = None) -> None:
                         choices=["monthly", "weekly", "yearly"])
     parser.add_argument("--bodies", default=settings.bodies,
                         help="Comma-separated body keys (default: all)")
+    parser.add_argument("--limit", type=int, default=0,
+                        help="Cap number of documents scraped (0 = no limit)")
     args = parser.parse_args(argv)
 
     # Imported here so non-scrape commands don't pay Scrapy's import cost.
@@ -48,6 +50,7 @@ def scrape_main(argv: list[str] | None = None) -> None:
         end_date=args.end,
         partition_size=args.partition,
         bodies=bodies or None,
+        limit=args.limit or None,
     )
 
 

@@ -27,14 +27,21 @@ def crawl(
     partition_size: str | None = None,
     bodies: list[str] | None = None,
     run_id: str | None = None,
+    limit: int | None = None,
 ) -> str:
-    """Run a full crawl for the given window. Returns the run_id."""
+    """Run a full crawl for the given window. Returns the run_id.
+
+    ``limit`` caps the number of documents scraped (CLOSESPIDER_ITEMCOUNT) — handy
+    for smoke tests and bounded sample runs.
+    """
     app_settings = get_settings()
     configure_logging(app_settings.log_level)
     run_id = run_id or uuid.uuid4().hex
 
     scrapy_settings = Settings()
     scrapy_settings.setmodule("wrc_pipeline.scraper.settings", priority="project")
+    if limit:
+        scrapy_settings.set("CLOSESPIDER_ITEMCOUNT", limit, priority="cmdline")
 
     process = CrawlerProcess(settings=scrapy_settings, install_root_handler=False)
     process.crawl(

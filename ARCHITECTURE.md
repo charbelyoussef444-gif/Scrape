@@ -52,7 +52,9 @@ dropped (see reconciliation below).
 ## Deduplication / idempotency
 Two independent levels:
 1. **Record** — metadata is upserted by `identifier` (the Mongo `_id`), so
-   reruns can never create duplicate records.
+   reruns can never create duplicate records. The identifier is the decision's
+   unique URL slug (e.g. `ADJ-00047352`), **not** the listing "Ref no", which is
+   not unique — one ref can map to several distinct decision documents.
 2. **Content** — every document is SHA-256 hashed. If the hash matches the stored
    value the bytes are *not* rewritten (no churn). If it differs, the new bytes
    are written under a hash-versioned key (`identifier__<hash>.ext`) so prior
