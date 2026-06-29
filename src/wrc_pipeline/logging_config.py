@@ -2,8 +2,11 @@
 
 Every log line is a single JSON object with a timestamp, level, event name and
 arbitrary contextual key/values (run_id, body, partition, identifier, ...).
-This satisfies the assignment's requirement for machine-readable logs and makes
-per-partition / per-body progress trivially greppable and aggregatable.
+
+We route *all* logging through one stdlib handler with a structlog
+``ProcessorFormatter`` so that both our own events **and** third-party logs
+(Scrapy, boto3, pymongo) render as JSON — the entire log stream is machine
+readable, not just our events.
 """
 
 from __future__ import annotations
@@ -21,22 +24,41 @@ def configure_logging(level: str = "INFO") -> None:
     """
     log_level = getattr(logging, level.upper(), logging.INFO)
 
-    # Route the stdlib root logger (used by Scrapy, boto3, pymongo) to stdout.
-    logging.basicConfig(format="%(message)s", stream=sys.stdout, level=log_level)
+    timestamper = structlog.processors.TimeStamper(fmt="iso", utc=True)
+    shared_processors: list = [
+        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.add_log_level,
+        timestamper,
+    ]
 
+    # structlog loggers hand off to the stdlib formatter below.
     structlog.configure(
         processors=[
-            structlog.contextvars.merge_contextvars,
-            structlog.processors.add_log_level,
-            structlog.processors.TimeStamper(fmt="iso", utc=True),
+            *shared_processors,
             structlog.processors.StackInfoRenderer(),
             structlog.processors.format_exc_info,
-            structlog.processors.JSONRenderer(),
+            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
         ],
-        wrapper_class=structlog.make_filtering_bound_logger(log_level),
-        logger_factory=structlog.PrintLoggerFactory(),
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
         cache_logger_on_first_use=True,
     )
+
+    # One handler renders everything (our events + foreign stdlib logs) as JSON.
+    formatter = structlog.stdlib.ProcessorFormatter(
+        foreign_pre_chain=shared_processors,
+        processors=[
+            structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+            structlog.processors.JSONRenderer(),
+        ],
+    )
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(formatter)
+
+    root = logging.getLogger()
+    root.handlers.clear()
+    root.addHandler(handler)
+    root.setLevel(log_level)
 
 
 def get_logger(name: str | None = None) -> structlog.stdlib.BoundLogger:
