@@ -68,6 +68,9 @@ Once the venv is activated, the `wrc-scrape` / `wrc-transform` / `pytest` /
 - Set an env var with `$env:NAME = "value"` (e.g. `$env:WRC_RECHECK_EXISTING = "false"`).
 - Launch the Dagster UI with:
   `$env:DAGSTER_HOME = (Get-Location).Path; dagster dev -m wrc_pipeline.orchestration.definitions`
+- **Long paths:** clone to a short directory (e.g. `C:\Scrape`) or enable Windows
+  long-path support. Dagster ships some long filenames that can exceed the legacy
+  260-char `MAX_PATH` limit if installed under a very deep directory.
 
 ## Run — command line
 
