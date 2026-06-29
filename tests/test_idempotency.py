@@ -57,7 +57,7 @@ def make_record():
         "identifier": "ADJ-1",
         "title": "ADJ-1",
         "description": "A v B",
-        "decision_date": date(2024, 1, 31),
+        "published_date": date(2024, 1, 31),
         "body_key": "workplace_relations_commission",
         "body_name": "Workplace Relations Commission",
         "body_id": 15376,

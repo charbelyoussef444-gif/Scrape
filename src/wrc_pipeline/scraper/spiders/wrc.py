@@ -178,7 +178,7 @@ class WrcSpider(scrapy.Spider):
                 or row.css("p.description::text").get()
                 or ""
             ).strip(),
-            "decision_date": _parse_site_date(row.css("span.date::text").get()),
+            "published_date": _parse_site_date(row.css("span.date::text").get()),
             "body_key": m["body_key"],
             "body_name": m["body_name"],
             "body_id": m["body_id"],

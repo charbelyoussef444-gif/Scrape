@@ -55,7 +55,7 @@ def test_listing_extracts_metadata_pagination_and_reconciles():
 
     rec = doc_reqs[0].meta["wrc_record"]
     assert rec["description"] == "Car Valet V Motor Garage"
-    assert rec["decision_date"].isoformat() == "2024-01-31"
+    assert rec["published_date"].isoformat() == "2024-01-31"
     assert rec["document_type"] == "html"
     assert rec["partition_date"] == "2024-01"
 

@@ -18,7 +18,7 @@ def _record(identifier: str, day: int) -> dict:
     return {
         "_id": identifier,
         "identifier": identifier,
-        "decision_date": datetime(2024, 1, day, tzinfo=UTC),
+        "published_date": datetime(2024, 1, day, tzinfo=UTC),
         "body_key": "labour_court",
         "partition_date": "2024-01",
         "file_hash": "h",

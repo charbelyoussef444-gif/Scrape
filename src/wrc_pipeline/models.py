@@ -126,7 +126,7 @@ def build_record(
     identifier: str,
     title: str,
     description: str,
-    decision_date: date | None,
+    published_date: date | None,
     body_key: str,
     body_name: str,
     body_id: int,
@@ -152,7 +152,7 @@ def build_record(
         "title": title,
         "description": description,
         # store as datetime for range queries in the transform step
-        "decision_date": _to_datetime(decision_date),
+        "published_date": _to_datetime(published_date),
         "body_key": body_key,
         "body_name": body_name,
         "body_id": body_id,

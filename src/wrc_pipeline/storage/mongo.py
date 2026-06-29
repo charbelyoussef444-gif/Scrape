@@ -29,7 +29,7 @@ class MongoRepository:
         """Create the indexes that back our lookups (idempotent in Mongo)."""
         # _id (== identifier) is unique automatically. These speed up the
         # transform's range query and per-body/partition reporting.
-        self._collection.create_index([("decision_date", ASCENDING)])
+        self._collection.create_index([("published_date", ASCENDING)])
         self._collection.create_index([("body_key", ASCENDING)])
         self._collection.create_index([("partition_date", ASCENDING)])
 
@@ -44,12 +44,12 @@ class MongoRepository:
         self._collection.replace_one({"_id": record["_id"]}, record, upsert=True)
 
     def find_by_date_range(self, start: date, end: date) -> list[dict[str, Any]]:
-        """Return records whose ``decision_date`` falls in ``[start, end)``.
+        """Return records whose ``published_date`` falls in ``[start, end)``.
 
         Used by the transformation step to select a slice of the landing zone.
         """
         query = {
-            "decision_date": {
+            "published_date": {
                 "$gte": _start_of_day(start),
                 "$lt": _start_of_day(end),
             }

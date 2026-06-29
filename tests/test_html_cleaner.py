@@ -41,3 +41,11 @@ def test_output_is_wellformed_document():
     out = clean_html(SAMPLE).decode("utf-8")
     assert out.startswith("<!DOCTYPE html>")
     assert "<body>" in out and "</body>" in out
+
+
+def test_output_leads_with_identifier_title():
+    # Matches the assignment screenshot: the cleaned "relevant content" begins
+    # with the decision's identifier heading.
+    out = clean_html(SAMPLE, title="ADJ-00047352").decode("utf-8")
+    assert "<h1>ADJ-00047352</h1>" in out
+    assert out.index("<h1>ADJ-00047352</h1>") < out.index("car valet")

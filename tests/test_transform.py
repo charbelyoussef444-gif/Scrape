@@ -46,7 +46,7 @@ def _record(identifier, doc_type, url, storage_path):
         "_id": identifier, "identifier": identifier, "document_type": doc_type,
         "document_url": url, "storage_path": storage_path, "file_hash": "old",
         "body_key": "labour_court", "partition_date": "2024-01",
-        "decision_date": None, "title": "t", "description": "d",
+        "published_date": None, "title": "t", "description": "d",
         "body_name": "LC", "body_id": 3, "source_url": url,
     }
 

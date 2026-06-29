@@ -101,7 +101,7 @@ class PersistencePipeline:
             identifier=identifier,
             title=record["title"],
             description=record["description"],
-            decision_date=record["decision_date"],
+            published_date=record["published_date"],
             body_key=record["body_key"],
             body_name=record["body_name"],
             body_id=record["body_id"],

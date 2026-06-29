@@ -38,7 +38,11 @@ UNWANTED_SELECTORS = [
 _DOC_TEMPLATE = (
     "<!DOCTYPE html>\n"
     '<html lang="en">\n<head>\n<meta charset="utf-8">\n'
-    "<title>{title}</title>\n</head>\n<body>\n{body}\n</body>\n</html>\n"
+    "<title>{title}</title>\n</head>\n<body>\n"
+    # The decision's identifier title sits in an <h1> outside div.content on the
+    # source page; re-add it so the cleaned document leads with the reference
+    # (matching the "relevant content" example in the assignment screenshot).
+    "<h1>{title}</h1>\n{body}\n</body>\n</html>\n"
 )
 
 

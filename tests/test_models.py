@@ -80,12 +80,12 @@ def test_curated_key_renames_to_identifier():
 def test_build_record_uses_identifier_as_id():
     rec = build_record(
         identifier="ADJ-1", title="ADJ-1", description="A v B",
-        decision_date=date(2024, 1, 31), body_key="wrc", body_name="WRC", body_id=15376,
+        published_date=date(2024, 1, 31), body_key="wrc", body_name="WRC", body_id=15376,
         partition_date="2024-01", source_url="http://x", document_url="http://x",
         document_type="html", storage_path="wrc/2024-01/ADJ-1.html",
         file_hash="deadbeef", content_length=10, run_id="run1",
     )
     assert rec["_id"] == "ADJ-1"
-    assert rec["decision_date"].year == 2024
+    assert rec["published_date"].year == 2024
     assert rec["file_hash"] == "deadbeef"
     assert "document_bytes" not in rec

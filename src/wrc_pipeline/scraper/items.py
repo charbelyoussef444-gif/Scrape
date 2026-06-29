@@ -14,7 +14,7 @@ class DecisionItem(scrapy.Item):
     identifier = scrapy.Field()
     title = scrapy.Field()
     description = scrapy.Field()
-    decision_date = scrapy.Field()  # datetime.date | None
+    published_date = scrapy.Field()  # datetime.date | None
 
     # --- Provenance / partitioning ---
     body_key = scrapy.Field()

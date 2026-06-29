@@ -48,7 +48,7 @@ def test_parse_document_follows_stub_to_pdf():
     spider = WrcSpider()
     record = {
         "identifier": "RP2093/2010", "title": "x", "description": "y",
-        "decision_date": None, "body_key": "employment_appeals_tribunal",
+        "published_date": None, "body_key": "employment_appeals_tribunal",
         "body_name": "EAT", "body_id": 2, "partition_date": "2011-12",
         "source_url": BASE, "document_url": BASE, "document_type": "html",
     }
@@ -67,7 +67,7 @@ def test_parse_document_yields_item_for_real_html():
     spider = WrcSpider()
     record = {
         "identifier": "LCR22904", "title": "x", "description": "y",
-        "decision_date": None, "body_key": "labour_court", "body_name": "LC",
+        "published_date": None, "body_key": "labour_court", "body_name": "LC",
         "body_id": 3, "partition_date": "2024-02",
         "source_url": BASE, "document_url": BASE, "document_type": "html",
     }
