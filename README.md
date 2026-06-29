@@ -20,11 +20,11 @@ retries/rate-limiting, deduplication, scaling to 50+ sources).
   Tribunal) render an HTML stub linking to the real PDF; the spider follows that
   one hop and stores the actual PDF.
 - Stores each file's path and **SHA-256 hash** in its metadata record.
-- Is **idempotent**: reruns never create duplicate records. By default it
-  re-fetches and uses the file hash to *detect content changes* (unchanged files
-  are not rewritten; changed files are stored under a versioned key). Set
-  `WRC_RECHECK_EXISTING=false` to skip already-ingested documents entirely
-  (zero re-downloads) — see ARCHITECTURE.md for the trade-off.
+- Is **idempotent**: a rerun creates no duplicate records and, by default, does
+  **not re-download** already-ingested decisions (they're immutable once
+  published). The SHA-256 file hash is stored and is the change-detection key —
+  set `WRC_RECHECK_EXISTING=true` to re-fetch known documents and detect the rare
+  corrected/republished decision (changed files are versioned). See ARCHITECTURE.md.
 - Emits **structured JSON logs** (per-partition progress, found vs scraped,
   failures with URL + reason, and an end-of-run summary).
 - A **transformation** step cleans HTML to the relevant decision content

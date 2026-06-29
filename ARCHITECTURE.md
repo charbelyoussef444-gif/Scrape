@@ -43,19 +43,22 @@ capital-C `/en/Cases/` and `*_Import/` paths; live decisions are at lowercase
 1. **Record** — upserted by `identifier` (Mongo `_id`), so reruns never duplicate.
    The identifier is the decision's unique **URL slug** (`ADJ-00047352`), not the
    listing "Ref no", which is *not* unique (one ref → several documents).
-2. **Content** — every document is SHA-256 hashed. Matching hash ⇒ bytes not
-   rewritten; differing hash ⇒ written under a versioned key
+2. **Content** — every document is SHA-256 hashed and the hash is stored. Matching
+   hash ⇒ bytes not rewritten; differing hash ⇒ written under a versioned key
    (`identifier__<hash>.ext`) so prior versions survive, and the metadata pointer
    updates.
 
-The source sends no `ETag`/`Last-Modified`, so hashing (not HTTP validators) is
-the change-detection source of truth, as the brief specifies. WRC pages embed a
-per-request `<!-- Elapsed time -->` comment; we strip that one volatile marker
-before hashing so reruns aren't all false "changed" (verified: a rerun reports
-every record `unchanged`, zero new objects). Setting `WRC_RECHECK_EXISTING=false`
-skips known identifiers entirely (zero re-downloads). **Reconciliation:** per
-`(body, partition)` we log *found* vs *new/changed/unchanged/skipped* vs *failed*
-(URL + reason), so every record is accounted for.
+Published decisions are **immutable**, so the default rerun **skips
+already-ingested identifiers** via a downloader middleware — no duplicate records
+and **no re-download of unchanged files** (verified: a second run reports every
+record `skipped`, zero fetches). The file hash is the integrity/dedup key; because
+the source sends no `ETag`/`Last-Modified`, detecting a change requires a fetch, so
+`WRC_RECHECK_EXISTING=true` re-fetches known documents and uses the hash to catch
+the rare corrected/republished decision. (WRC HTML embeds a per-request
+`<!-- Elapsed time -->` comment; we strip that one volatile marker before hashing
+so a re-fetch isn't a false "changed".) **Reconciliation:** per `(body, partition)`
+we log *found* vs *new/changed/unchanged/skipped* vs *failed* (URL + reason), so
+every record is accounted for.
 
 ## Scaling to 50+ sources
 Site-specific code is isolated (a spider, the `sources.py` body map, selectors);

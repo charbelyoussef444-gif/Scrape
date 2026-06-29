@@ -65,7 +65,12 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     # --- Idempotency ---
-    recheck_existing: bool = True
+    # Published decisions are immutable, so by default a rerun skips
+    # already-ingested identifiers entirely: no duplicate records and no
+    # re-download of unchanged files. Set to true to re-fetch known documents and
+    # use the file hash to detect changes between runs (for corrected/republished
+    # decisions).
+    recheck_existing: bool = False
 
     def body_keys(self) -> list[str]:
         """Parse the comma-separated ``bodies`` string into a list of keys."""
