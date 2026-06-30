@@ -72,7 +72,7 @@ Once the venv is activated, the `wrc-scrape` / `wrc-transform` / `pytest` /
   long-path support. Dagster ships some long filenames that can exceed the legacy
   260-char `MAX_PATH` limit if installed under a very deep directory.
 
-## Run — command line
+## Run — command line ( Poweshell ) 
 
 ```bash
 # Ingest: scrape all bodies, Jan–Mar 2024 (end date is exclusive), monthly.
