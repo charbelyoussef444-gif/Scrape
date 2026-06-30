@@ -90,9 +90,9 @@ Re-running the same `wrc-scrape` command is safe: it will report records as
 
 ## Run — Dagster (orchestrated)
 
-```bash
-# Local UI at http://localhost:3000 (DAGSTER_HOME uses the provided dagster.yaml)
-DAGSTER_HOME=$(pwd) dagster dev -m wrc_pipeline.orchestration.definitions
+```powershell
+$env:DAGSTER_HOME = (Get-Location).Path
+dagster dev -m wrc_pipeline.orchestration.definitions
 ```
 
 In the UI, open the `wrc_ingestion_pipeline` job → **Launchpad**, set the run
