@@ -88,7 +88,7 @@ wrc-transform --start 2024-01-01 --end 2024-04-01
 Re-running the same `wrc-scrape` command is safe: it will report records as
 `unchanged` and won't duplicate anything.
 
-## Run — Dagster (orchestrated)
+## Run — Dagster (orchestrated) ( Powershell ) 
 
 ```powershell
 $env:DAGSTER_HOME = (Get-Location).Path
