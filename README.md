@@ -72,7 +72,10 @@ Once the venv is activated, the `wrc-scrape` / `wrc-transform` / `pytest` /
   long-path support. Dagster ships some long filenames that can exceed the legacy
   260-char `MAX_PATH` limit if installed under a very deep directory.
 
-## Run — command line ( Poweshell ) 
+## Run — command line
+
+The `wrc-scrape` / `wrc-transform` commands are identical on macOS, Linux and
+Windows (once the package is installed / the venv is active).
 
 ```bash
 # Ingest: scrape all bodies, Jan–Mar 2024 (end date is exclusive), monthly.
@@ -88,9 +91,17 @@ wrc-transform --start 2024-01-01 --end 2024-04-01
 Re-running the same `wrc-scrape` command is safe: it will report records as
 `unchanged` and won't duplicate anything.
 
-## Run — Dagster (orchestrated) ( Powershell ) 
+## Run — Dagster (orchestrated)
+
+Local UI at http://localhost:3000 (`DAGSTER_HOME` uses the provided `dagster.yaml`).
+
+```bash
+# macOS / Linux
+DAGSTER_HOME=$(pwd) dagster dev -m wrc_pipeline.orchestration.definitions
+```
 
 ```powershell
+# Windows (PowerShell)
 $env:DAGSTER_HOME = (Get-Location).Path
 dagster dev -m wrc_pipeline.orchestration.definitions
 ```
