@@ -56,7 +56,7 @@ MinIO console: http://localhost:9001 (user/pass from `.env`, default
 
 The blocks above are bash; the PowerShell equivalents for setup are:
 
-```powershell
+```PowerShell
 Copy-Item .env.example .env
 docker compose up -d mongo minio createbuckets
 python -m venv .venv; .\.venv\Scripts\Activate.ps1
