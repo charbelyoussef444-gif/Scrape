@@ -45,7 +45,9 @@ cp .env.example .env
 # 2. Start storage (MongoDB + MinIO) and create the buckets.
 docker compose up -d mongo minio createbuckets
 
-# 3. Install the package (a virtualenv is recommended).
+# 3. Create and activate a virtualenv, then install the package.
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -e ".[dev,orchestration]"
 ```
 
